@@ -3,16 +3,17 @@ import ReactDOM from 'react-dom';
 import placeShip from './placeShip';
 import './index.css';
 import ships from './ships.js';
+import ships2 from './ships2.js';
 
 function Square(props) {
     const { status, shot, isShipVisible } = props;
 
     let marker;
     if (status === "ship") {
-        if (shot)
+        /*if (shot)*/
             marker = 'X';
-        else
-            marker = ""
+        /*else
+            marker = ""*/
     } /*else if (status === "not free") {
             marker = '!';
     }*/ else {
@@ -90,14 +91,6 @@ function GameLog(props) {
     )
 }
 
-function watchShips(field) {
-    for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-            alert(j + " " + i + " " + field[j][i].status);
-        }
-    }
-}
-
 /*function prioritize(field, ships) {
     return field[1][1];
 }
@@ -114,7 +107,7 @@ class Game extends React.Component {
             playerField: [],
             prioritize: [],
             enemyShips: [...ships],
-            playerShips: [...ships],
+            playerShips: [...ships2],
             //areEnemyShipsInvisible: true,
             isFinished: false,
             logs: ['Waiting'],
@@ -140,8 +133,9 @@ class Game extends React.Component {
                     status: "free",
                 };
                 this.state.prioritize[i][j] = {
-                    x: j,
-                    y: i,
+                   /* x: j,
+                    y: i,*/
+                    points: 1,
                 };
             }
         }
@@ -150,8 +144,6 @@ class Game extends React.Component {
             placeShip(this.state.fieldToBuild, ship)
         });
 
-        //watchShips(this.state.fieldToBuild);
-
         this.state.playerShips.forEach(ship => {
             placeShip(this.state.playerField, ship)
         });
@@ -159,10 +151,11 @@ class Game extends React.Component {
     }
 
     handleClick(y, x) {
+        if (this.state.isFinished) {
+            return
+        }
         if (this.state.isPlayerTurn) {
-            if (this.state.isFinished) {
-                return
-            } else if (this.state.fieldToBuild[y][x].shot) {
+             if (this.state.fieldToBuild[y][x].shot) {
                 alert("repeat");
                 return
             }
@@ -186,6 +179,7 @@ class Game extends React.Component {
                         newLogs.push('Shot');
                     } else {
                         newLogs.push('Ship destroyed');
+                        hittedShip.destroyed = true;
                     }
 
                     if (newShips.every(ship => (ship.hp === 0))) {
@@ -208,30 +202,107 @@ class Game extends React.Component {
         }
     }
 
-    computerTurn(field, ships) {
-        let x = Math.trunc(Math.random() * 10);
-        let y = Math.trunc(Math.random() * 10);
+    computerTurn() {
+        if (this.state.isFinished) {
+            return
+        }
         if(!this.state.isPlayerTurn) {
-            if (field[y][x].shot !== undefined) {
-                this.computerTurn(field, ships)
-            }
-            else {
-                this.shot(field[y][x]);
-                this.setState(state => {
-                    let isPlayerTurn = true;
-                    return {
-                        isPlayerTurn: isPlayerTurn,
+            this.setState(state => {
+                const newField = [...state.playerField];
+                const newShips = [...state.playerShips];
+                const newLogs = [...state.logs];
+                const newPrioritize = [...state.prioritize];
+                let isPlayerTurn = false;
+                let isFinished = false;
+                let shotSquare;
+                try {
+                    shotSquare = this.setPrioritize(newField, newPrioritize);
+                }
+                catch (TypeError) {
+                    return;
+                }
+                shotSquare.shot = true;
+                shotSquare.isShipVisible = true;
+                if (shotSquare.status === "ship") {
+                    const hittedShip = newShips.find(ship => (ship.id === shotSquare.shipId));
+                    hittedShip.hp--;
+                    if (hittedShip.hp > 0) {
+                        newLogs.push('Shot');
+                    } else {
+                        newLogs.push('Ship destroyed');
+                        hittedShip.destroyed = true;
+                        for (let i = 0; i < 10; i++) {
+                            for (let j = 0; j < 10; j++) {
+                                if (newField[j][i].shipId === hittedShip.id) {
+                                    for (let k = newField[j][i].x - 1; k <= newField[j][i].x + 1; k++) {
+                                        for (let n = newField[j][i].y - 1; n <= newField[j][i].y + 1; n++) {
+                                            if ((k < 0) || (k > 9))
+                                                continue;
+                                            if ((n < 0) || (n > 9))
+                                                continue;
+                                            if (newPrioritize[n][k].points === 1) {
+                                                newPrioritize[n][k].points = 0;
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
                     }
-                })
-                /*alert(this.state.isPlayerTurn);*/
-            }
+
+                    if (newShips.every(ship => (ship.hp === 0))) {
+                        newLogs.push('Game finished');
+                        isFinished = true;
+                    }
+                } else {
+                    newLogs.push('Miss');
+                    isPlayerTurn = true;
+                }
+                return {
+                    playerField: newField,
+                    playerShips: newShips,
+                    isFinished: isFinished,
+                    logs: newLogs,
+                    isPlayerTurn: isPlayerTurn,
+                    prioritize: newPrioritize,
+                }
+            })
         }
     }
 
-    shot(fieldElementElement) {
-            fieldElementElement.shot = true;
-            fieldElementElement.isShipVisible = true;
+    setPrioritize(newField, newPrioritize) {
+        let highestPrioritize = 1;
+        let x = 10;
+        let y = 10;
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                if (highestPrioritize < newPrioritize[i][j].points) {
+                    highestPrioritize = newPrioritize[i][j].points
+                    x = j;
+                    y = i;
+                }
+            }
+        }
+        if (highestPrioritize === 1) {
+            x = Math.trunc(Math.random() * 10);
+            y = Math.trunc(Math.random() * 10);
+            if (newPrioritize[y][x].points === 0) {
+                /*alert("повтор " + x + " " + y);*/
+                this.computerTurn(newField, newPrioritize);
+                return newField[10][10];
+            }
+        }
+        newPrioritize[y][x].points = 0;
+        return newField[y][x];
+
+
+        /*newShips.forEach(ship => {
+            this.placeIgnored(newField, ship)
+        });*/
     }
+
+
 
 
     render() {
@@ -251,8 +322,8 @@ class Game extends React.Component {
                         onClick = {(y, x) => this.handleClick(y, x)}
                     />
                     {this.state.fieldToBuild[5][1].status}
-                    {this.state.fieldToBuild[5][1].x}
-                    {this.state.fieldToBuild[5][1].y}
+                    {this.state.prioritize[5][1].points}
+                    {this.state.prioritize[5][2].points}
                 </div>
                 <div className="game-info">
                     <GameLog logs={this.state.logs} />
