@@ -5,24 +5,17 @@ export default (field, ship) => {
 function randomStartSquare(field, ship) {
     let x = Math.trunc(Math.random() * 10);
     let y = Math.trunc(Math.random() * 10);
-    /*alert("rSS " + x + " " + y + " " + ship.direction + " " + ship.id);*/
-    /*if ((field[y][x].status !== "free") || ((x - 1 + ship.size > 9) && (ship.direction === "horizontal")) || ((y - 1 + ship.size > 9) && (ship.direction === "vertical")))
-        randomStartSquare(field, ship);*/
     if (field[y][x].status !== "free") {
-        /*alert("field contains ship");*/
         randomStartSquare(field, ship);
     }
     else if ((x - 1 + ship.size > 9) && (ship.direction === "horizontal")) {
-        /*alert("too much x");*/
         randomStartSquare(field, ship);
     }
     else if ((y - 1 + ship.size > 9) && (ship.direction === "vertical")) {
-        /*alert("too much y");*/
         randomStartSquare(field, ship);
     }
 
     else {
-        /*alert("all right rSS " + ship.id);*/
         ship.startSquare = {x, y}
     }
 }
@@ -39,7 +32,6 @@ function buildShip(field, ship) {
     randomDirection(ship);
     randomStartSquare(field, ship);
     let niceShip = true;
-    /*alert("bS " + ship.startSquare.x + " " + ship.startSquare.y + " " + ship.direction + " " + ship.id);*/
 
     if (ship.direction === "horizontal") {
         for (let i = ship.startSquare.x; i < ship.startSquare.x + ship.size; i++) {
@@ -99,6 +91,5 @@ function buildShip(field, ship) {
         }
     }
 
-    /*alert("all right bS " + ship.id);*/
 
 }

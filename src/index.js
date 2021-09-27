@@ -80,7 +80,7 @@ function GameLog(props) {
             <div className="gamelog-header">Логи игры</div>
             <ul className="gamelog-list">
                 {props.logs.map((item, index) => {
-                    if (index === props.logs.length - 1) {
+                    if (index > props.logs.length - 6) {
                         return (
                             <li>{`${(index === 0) ? '' : String(index) + '.'} ${item}`}</li>
                         )
@@ -133,9 +133,9 @@ class Game extends React.Component {
                     status: "free",
                 };
                 this.state.prioritize[i][j] = {
-                   /* x: j,
-                    y: i,*/
-                    points: 1,
+                    x: j,
+                    y: i,
+                    points: 5,
                 };
             }
         }
@@ -214,20 +214,47 @@ class Game extends React.Component {
                 const newPrioritize = [...state.prioritize];
                 let isPlayerTurn = false;
                 let isFinished = false;
-                let shotSquare;
-                try {
-                    shotSquare = this.setPrioritize(newField, newPrioritize);
-                }
-                catch (TypeError) {
-                    return;
-                }
+                let shotSquare = this.setPrioritize(newField, newPrioritize);
                 shotSquare.shot = true;
                 shotSquare.isShipVisible = true;
+                let k = shotSquare.y;
+                let n = shotSquare.x;
                 if (shotSquare.status === "ship") {
                     const hittedShip = newShips.find(ship => (ship.id === shotSquare.shipId));
                     hittedShip.hp--;
                     if (hittedShip.hp > 0) {
                         newLogs.push('Shot');
+                        if (hittedShip.startHp - hittedShip.hp === 1) {
+                            this.highPrioritizeSquare(k-1, n, newPrioritize);
+                            this.highPrioritizeSquare(k+1, n, newPrioritize);
+                            this.highPrioritizeSquare(k, n-1, newPrioritize);
+                            this.highPrioritizeSquare(k, n+1, newPrioritize);
+                        }
+                        else {
+                            if (hittedShip.direction === "vertical") {
+                                for (let i = 0; i < 10; i++) {
+                                    for (let j = 0; j < 10; j++) {
+                                        if ((newField[j][i].shipId === hittedShip.id)&&(newField[j][i].shot)) {
+                                            this.higherPrioritizeSquare(newField[j][i].y-1, newField[j][i].x, newPrioritize);
+                                            this.higherPrioritizeSquare(newField[j][i].y+1, newField[j][i].x, newPrioritize);
+                                        }
+
+                                    }
+                                }
+                            } else {
+                                for (let i = 0; i < 10; i++) {
+                                    for (let j = 0; j < 10; j++) {
+                                        if ((newField[j][i].shipId === hittedShip.id)&&(newField[j][i].shot)) {
+                                            this.higherPrioritizeSquare(newField[j][i].y, newField[j][i].x+1, newPrioritize);
+                                            this.higherPrioritizeSquare(newField[j][i].y, newField[j][i].x-1, newPrioritize);
+                                        }
+
+                                    }
+                                }
+                            }
+
+                        }
+
                     } else {
                         newLogs.push('Ship destroyed');
                         hittedShip.destroyed = true;
@@ -240,7 +267,7 @@ class Game extends React.Component {
                                                 continue;
                                             if ((n < 0) || (n > 9))
                                                 continue;
-                                            if (newPrioritize[n][k].points === 1) {
+                                            if (newPrioritize[n][k].points !== 0) {
                                                 newPrioritize[n][k].points = 0;
                                             }
                                         }
@@ -258,6 +285,10 @@ class Game extends React.Component {
                 } else {
                     newLogs.push('Miss');
                     isPlayerTurn = true;
+                    this.lowPrioritizeSquare(k-1,n,newPrioritize);
+                    this.lowPrioritizeSquare(k+1,n,newPrioritize);
+                    this.lowPrioritizeSquare(k,n-1,newPrioritize);
+                    this.lowPrioritizeSquare(k,n+1,newPrioritize);
                 }
                 return {
                     playerField: newField,
@@ -271,28 +302,56 @@ class Game extends React.Component {
         }
     }
 
+    highPrioritizeSquare(k, n, newPrioritize) {
+        if (((k < 0) || (k > 9)) || ((n < 0) || (n > 9))) {
+            return;
+        }
+        if (newPrioritize[k][n].points !== 0) {
+            newPrioritize[k][n].points = 10;
+        }
+    }
+
+    higherPrioritizeSquare(k, n, newPrioritize) {
+        if (((k < 0) || (k > 9)) || ((n < 0) || (n > 9))) {
+            return;
+        }
+        if (newPrioritize[k][n].points !== 0) {
+            newPrioritize[k][n].points = 20;
+        }
+    }
+
+    lowPrioritizeSquare(k, n, newPrioritize) {
+        if (((k < 0) || (k > 9)) || ((n < 0) || (n > 9))) {
+            return;
+        }
+        if (newPrioritize[k][n].points !== 0) {
+            newPrioritize[k][n].points--;
+        }
+    }
+
     setPrioritize(newField, newPrioritize) {
         let highestPrioritize = 1;
+        let highestPrioritizeArray = [];
         let x = 10;
         let y = 10;
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
                 if (highestPrioritize < newPrioritize[i][j].points) {
                     highestPrioritize = newPrioritize[i][j].points
-                    x = j;
-                    y = i;
                 }
             }
         }
-        if (highestPrioritize === 1) {
-            x = Math.trunc(Math.random() * 10);
-            y = Math.trunc(Math.random() * 10);
-            if (newPrioritize[y][x].points === 0) {
-                /*alert("повтор " + x + " " + y);*/
-                this.computerTurn(newField, newPrioritize);
-                return newField[10][10];
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    if (highestPrioritize === newPrioritize[i][j].points) {
+                        highestPrioritizeArray.push(newPrioritize[i][j]);
+                    }
+                }
             }
-        }
+            let random = Math.trunc(Math.random() * highestPrioritizeArray.length - 1);
+             x = highestPrioritizeArray[random].x;
+             y = highestPrioritizeArray[random].y;
+
         newPrioritize[y][x].points = 0;
         return newField[y][x];
 

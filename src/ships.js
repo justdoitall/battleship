@@ -6,6 +6,7 @@ class Ship {
         this.size = size;
         this.id = Ship.count();
         this.hp = size;
+        this.startHp = size;
     }
 
     static count() {
