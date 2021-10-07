@@ -21,15 +21,15 @@ ol, ul {
     background: #fff;
     border: 1px solid #999;
     float: left;
-    font-size: 24px;
+    font-size: 26px;
     font-weight: bold;
     line-height: 34px;
-    height: 34px;
+    height: 40px;
     margin-right: -1px;
     margin-top: -1px;
     padding: 0;
     text-align: center;
-    width: 34px;
+    width: 40px;
 }
 
 .square:focus {
@@ -47,22 +47,80 @@ ol, ul {
 
 .game-info {
     /*margin-left: 20px;*/
+    font-size: 105%;
+    text-align: left;
     position: fixed;
     top: 32em;
-
-
+    left: 53%;
 }
 
+.game-info-name {
+    font-size: 105%;
+    text-align: justify-all;
+}
+
+.name {
+    /*display: flex;*/
+    /*flex-direction: row;*/
+    font-size: 130%;
+    justify-content: center;
+    position: absolute;
+    top:43.5%;
+    left: 38%;
+}
+
+.battleship {
+    font-size: 3em;
+    justify-content: center;
+    position: absolute;
+    top:32%;
+    left: 33%;
+}
+
+
+
 .board-opponent {
-    margin-left: 20px;
+    margin-left: 25px;
+}
+
+.form {
+    margin-left: 2px;
 }
 
 .visibleShip {
     background-color: pink;
 }
 
+.destroyedShip {
+    background-color: violet;
+}
+
+.undamagedShip {
+    background-color: #c7e5c7;
+}
+
 .game {
     margin-top: 50px;
     display: flex;
     justify-content: center;
+}
+
+.button {
+    height: 4em;
+    width: 12em;
+    position: fixed;
+    top: 37em;
+    left: 30%;
+}
+
+.buttonPlay {
+    height: 4em;
+    width: 12em;
+    position: fixed;
+    margin: 24% 40%;
+    border-radius: 20% 10%;
+    transition: all 1.2s;
+    background-color: #fff;
+    font-size: 120%;
+
 }

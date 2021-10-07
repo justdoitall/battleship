@@ -4,26 +4,25 @@ import placeShip from './placeShip';
 import './index.css';
 import ships from './ships.js';
 import ships2 from './ships2.js';
+import restartGame from './restartGame.js';
 
 function Square(props) {
-    const { status, shot, isShipVisible } = props;
+    const { status, shot, isShipVisible, isShipDestroyed, affiliation } = props;
 
     let marker;
     if (status === "ship") {
-        /*if (shot)*/
+        if (shot)
             marker = 'X';
-        /*else
-            marker = ""*/
-    } /*else if (status === "not free") {
-            marker = '!';
-    }*/ else {
+        else
+            marker = ""
+    } else {
         if (shot)
             marker = '·';
         else
             marker = "";
     }
     return (
-        <button className={`square ${status === "ship" && isShipVisible ? 'visibleShip' : ''}`} onClick={props.onClick}>
+        <button className={`square ${isShipDestroyed ? 'destroyedShip' : ''} ${status === "ship" && !isShipVisible && affiliation === "player" ? 'undamagedShip' : ''} ${status === "ship" && isShipVisible ? 'visibleShip' : ''}`} onClick={props.onClick}>
             <div className="marker">{marker}</div>
         </button>
     )
@@ -40,6 +39,8 @@ function FieldRow(props) {
                         status={square.status}
                         shot={square.shot}
                         isShipVisible={square.isShipVisible}
+                        isShipDestroyed={square.isShipDestroyed}
+                        affiliation = {props.affiliation}
                         onClick={() => props.onClick(square.y, square.x)}
                     />
                 )
@@ -52,11 +53,12 @@ function Board(props) {
     return (
         <div>
             {props.board.map((row, index) => {
-                if (props.affilation === "computer") {
+                if (props.affiliation === "computer") {
                 return (
                     <FieldRow
                         key={index}
                         row={row}
+                        affiliation = "computer"
                         onClick={(y, x) => props.onClick(y, x)}
                     />
                 )} else {
@@ -64,6 +66,7 @@ function Board(props) {
                         <FieldRow
                             key={index}
                             row={row}
+                            affiliation = "player"
                             onClick={function (y, x) {
                             }}
                         />
@@ -77,7 +80,6 @@ function Board(props) {
 function GameLog(props) {
     return (
         <div className="gamelog">
-            <div className="gamelog-header">Логи игры</div>
             <ul className="gamelog-list">
                 {props.logs.map((item, index) => {
                     if (index > props.logs.length - 6) {
@@ -91,14 +93,6 @@ function GameLog(props) {
     )
 }
 
-/*function prioritize(field, ships) {
-    return field[1][1];
-}
-
-function shot(prioritize1) {
-    
-}*/
-
 class Game extends React.Component {
     constructor(props) {
         super(props);
@@ -108,12 +102,13 @@ class Game extends React.Component {
             prioritize: [],
             enemyShips: [...ships],
             playerShips: [...ships2],
-            //areEnemyShipsInvisible: true,
             isFinished: false,
             logs: ['Waiting'],
             isPlayerTurn: true,
+            value: props.name,
+            isNameAdded: false,
         };
-
+        // делаем массивы двумерными и заполняем стартовыми данными
         for (let i = 0; i < 10; i++) {
             this.state.fieldToBuild.push([]);
             this.state.playerField.push([]);
@@ -139,7 +134,7 @@ class Game extends React.Component {
                 };
             }
         }
-
+        //расставляем корабли
         this.state.enemyShips.forEach(ship => {
             placeShip(this.state.fieldToBuild, ship)
         });
@@ -159,7 +154,6 @@ class Game extends React.Component {
                 alert("repeat");
                 return
             }
-
             this.setState(state => {
                 const newField = [...state.fieldToBuild];
                 newField[y][x].shot = true;
@@ -173,19 +167,26 @@ class Game extends React.Component {
                 if (newField[y][x].status === "ship") {
                     const hittedShip = newShips.find(ship => (ship.id === newField[y][x].shipId));
                     hittedShip.hp--;
-                    // если хитпоинтов больше нуля, то это обычное попадание
-                    // если хитпоинтов ноль, то корабль уничтожен
+                    // если хп больше нуля, то это попадание
+                    // если хп ноль, то корабль уничтожен
                     if (hittedShip.hp > 0) {
                         newLogs.push('Shot');
                     } else {
                         newLogs.push('Ship destroyed');
-                        hittedShip.destroyed = true;
+                        for (let i = 0; i < 10; i++) {
+                            for (let j = 0; j < 10; j++) {
+                              if (newField[j][i].shipId === hittedShip.id) {
+                                  newField[j][i].isShipDestroyed = true;
+                              }
+                            }
+                        }
                     }
 
                     if (newShips.every(ship => (ship.hp === 0))) {
                         newLogs.push('Game finished');
                         isFinished = true;
                     }
+                    // если промах, то передаем ход
                 } else {
                     newLogs.push('Miss');
                     isPlayerTurn = false;
@@ -202,11 +203,12 @@ class Game extends React.Component {
         }
     }
 
-    computerTurn() {
+    async computerTurn() {
         if (this.state.isFinished) {
             return
         }
-        if(!this.state.isPlayerTurn) {
+        if (!this.state.isPlayerTurn) {
+            await this.timeout();
             this.setState(state => {
                 const newField = [...state.playerField];
                 const newShips = [...state.playerShips];
@@ -214,6 +216,8 @@ class Game extends React.Component {
                 const newPrioritize = [...state.prioritize];
                 let isPlayerTurn = false;
                 let isFinished = false;
+                // вызов функции, которая оценивает все поля на данный момент по балльной системе
+                // и возвращает поле с наивысшими баллами либо одно из таких рандомно, если их несколько
                 let shotSquare = this.setPrioritize(newField, newPrioritize);
                 shotSquare.shot = true;
                 shotSquare.isShipVisible = true;
@@ -224,19 +228,20 @@ class Game extends React.Component {
                     hittedShip.hp--;
                     if (hittedShip.hp > 0) {
                         newLogs.push('Shot');
+                        // здесь и дальше небольшие функции, задающие баллы конкретным полям в зависимости от
+                        // происходящих событий
                         if (hittedShip.startHp - hittedShip.hp === 1) {
-                            this.highPrioritizeSquare(k-1, n, newPrioritize);
-                            this.highPrioritizeSquare(k+1, n, newPrioritize);
-                            this.highPrioritizeSquare(k, n-1, newPrioritize);
-                            this.highPrioritizeSquare(k, n+1, newPrioritize);
-                        }
-                        else {
+                            this.highPrioritizeSquare(k - 1, n, newPrioritize);
+                            this.highPrioritizeSquare(k + 1, n, newPrioritize);
+                            this.highPrioritizeSquare(k, n - 1, newPrioritize);
+                            this.highPrioritizeSquare(k, n + 1, newPrioritize);
+                        } else {
                             if (hittedShip.direction === "vertical") {
                                 for (let i = 0; i < 10; i++) {
                                     for (let j = 0; j < 10; j++) {
-                                        if ((newField[j][i].shipId === hittedShip.id)&&(newField[j][i].shot)) {
-                                            this.higherPrioritizeSquare(newField[j][i].y-1, newField[j][i].x, newPrioritize);
-                                            this.higherPrioritizeSquare(newField[j][i].y+1, newField[j][i].x, newPrioritize);
+                                        if ((newField[j][i].shipId === hittedShip.id) && (newField[j][i].shot)) {
+                                            this.higherPrioritizeSquare(newField[j][i].y - 1, newField[j][i].x, newPrioritize);
+                                            this.higherPrioritizeSquare(newField[j][i].y + 1, newField[j][i].x, newPrioritize);
                                         }
 
                                     }
@@ -244,9 +249,9 @@ class Game extends React.Component {
                             } else {
                                 for (let i = 0; i < 10; i++) {
                                     for (let j = 0; j < 10; j++) {
-                                        if ((newField[j][i].shipId === hittedShip.id)&&(newField[j][i].shot)) {
-                                            this.higherPrioritizeSquare(newField[j][i].y, newField[j][i].x+1, newPrioritize);
-                                            this.higherPrioritizeSquare(newField[j][i].y, newField[j][i].x-1, newPrioritize);
+                                        if ((newField[j][i].shipId === hittedShip.id) && (newField[j][i].shot)) {
+                                            this.higherPrioritizeSquare(newField[j][i].y, newField[j][i].x + 1, newPrioritize);
+                                            this.higherPrioritizeSquare(newField[j][i].y, newField[j][i].x - 1, newPrioritize);
                                         }
 
                                     }
@@ -257,10 +262,13 @@ class Game extends React.Component {
 
                     } else {
                         newLogs.push('Ship destroyed');
-                        hittedShip.destroyed = true;
                         for (let i = 0; i < 10; i++) {
                             for (let j = 0; j < 10; j++) {
+                                // для каждой клетки, имеющей айдишник такой же, как у уничтоженного корабля,
+                                // пройтись по ним и всем соседям и задать им количество очков, равное 0,
+                                // убрав их из расчетов поля для выстрела
                                 if (newField[j][i].shipId === hittedShip.id) {
+                                    newField[j][i].isShipDestroyed = true;
                                     for (let k = newField[j][i].x - 1; k <= newField[j][i].x + 1; k++) {
                                         for (let n = newField[j][i].y - 1; n <= newField[j][i].y + 1; n++) {
                                             if ((k < 0) || (k > 9))
@@ -283,12 +291,13 @@ class Game extends React.Component {
                         isFinished = true;
                     }
                 } else {
+                    // шахматный порядок стрельбы, если нет других факторов
                     newLogs.push('Miss');
                     isPlayerTurn = true;
-                    this.lowPrioritizeSquare(k-1,n,newPrioritize);
-                    this.lowPrioritizeSquare(k+1,n,newPrioritize);
-                    this.lowPrioritizeSquare(k,n-1,newPrioritize);
-                    this.lowPrioritizeSquare(k,n+1,newPrioritize);
+                    this.lowPrioritizeSquare(k - 1, n, newPrioritize);
+                    this.lowPrioritizeSquare(k + 1, n, newPrioritize);
+                    this.lowPrioritizeSquare(k, n - 1, newPrioritize);
+                    this.lowPrioritizeSquare(k, n + 1, newPrioritize);
                 }
                 return {
                     playerField: newField,
@@ -332,8 +341,8 @@ class Game extends React.Component {
     setPrioritize(newField, newPrioritize) {
         let highestPrioritize = 1;
         let highestPrioritizeArray = [];
-        let x = 10;
-        let y = 10;
+        let x;
+        let y;
         for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
                 if (highestPrioritize < newPrioritize[i][j].points) {
@@ -348,17 +357,17 @@ class Game extends React.Component {
                     }
                 }
             }
-            let random = Math.trunc(Math.random() * highestPrioritizeArray.length - 1);
+            let random = Math.trunc(Math.random() * highestPrioritizeArray.length);
              x = highestPrioritizeArray[random].x;
              y = highestPrioritizeArray[random].y;
 
         newPrioritize[y][x].points = 0;
         return newField[y][x];
 
+    }
 
-        /*newShips.forEach(ship => {
-            this.placeIgnored(newField, ship)
-        });*/
+    timeout() {
+        return new Promise( res => setTimeout(res, 300) );
     }
 
 
@@ -366,36 +375,89 @@ class Game extends React.Component {
 
     render() {
         this.computerTurn(this.state.playerField, this.state.playerShips);
+        let text = this.state.isPlayerTurn ? "Ход " + this.state.value : "Ход компьютера:";
         return (
             <div className="game">
                 {<div className="game-board">
                     <Board
-                        affilation = 'player'
+                        affiliation = 'player'
                         board = {this.state.playerField}
                     />
                 </div>}
                 <div className="board-opponent">
                     <Board
-                        affilation = 'computer'
+                        affiliation = 'computer'
                         board = {this.state.fieldToBuild}
                         onClick = {(y, x) => this.handleClick(y, x)}
                     />
-                    {this.state.fieldToBuild[5][1].status}
-                    {this.state.prioritize[5][1].points}
-                    {this.state.prioritize[5][2].points}
                 </div>
                 <div className="game-info">
+                    {<div className="game-info-name">{text}</div>}
                     <GameLog logs={this.state.logs} />
                 </div>
+                <button className="button" onClick={ restartGame.bind(this) }>
+                    <span>Reload</span>
+                </button>
             </div>
         );
     }
+}
+
+
+class Start extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            isNameAdded: false,
+            value: "",
+        };
+        this.onNameChangeHandler = this.onNameChangeHandler.bind(this);
+    }
+
+    onNameChangeHandler(event) {
+        if (!this.state.isNameAdded) {
+            this.setState({
+                value: event.target.value
+            });
+        }
+    }
+
+    buttonClick() {
+        this.setState({
+            isButtonPressed: true
+        });
+    }
+
+    render() {
+        if (this.state.isButtonPressed) {
+            return <Game name={this.state.value} />;
+        } else
+            return (
+                <div>
+                    <div className="battleship">
+                        Welcome to Battleship
+                    </div>
+                    <form className="name">
+                        <label>Player Name:
+                            <input className="form" type="text"
+                                   value={this.state.value}
+                                   placeholder="enter player name"
+                                   onChange={this.onNameChangeHandler}/>
+                        </label>
+                    </form>
+                    <button className="buttonPlay" onClick={this.buttonClick.bind(this)}>
+                        Play
+                    </button>
+                </div>
+            );
+    }
+
 
 }
 
 // ========================================
 
 ReactDOM.render(
-    <Game />,
+    <Start />,
     document.getElementById('root')
 );
