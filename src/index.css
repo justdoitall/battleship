@@ -92,7 +92,7 @@ ol, ul {
 }
 
 .destroyedShip {
-    background-color: violet;
+    background-color: #be3fbe;
 }
 
 .undamagedShip {
@@ -123,4 +123,14 @@ ol, ul {
     background-color: #fff;
     font-size: 120%;
 
+}
+
+.finished {
+    position: fixed;
+    justify-content: center;
+    margin: 9% 45%;
+    font-size: 3.5em;
+    background-color: #fff;
+    display: flex;
+    padding: 1em;
 }

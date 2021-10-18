@@ -68,26 +68,25 @@ function buildShip(field, ship) {
             buildShip(field, ship);
         }
     }
-    else {
-        alert("mistake");
-    }
 
-    for (let i = 0; i < 10; i++) {
-        for (let j = 0; j < 10; j++) {
-            if (field[j][i].shipId === ship.id) {
-                for (let k = field[j][i].x - 1; k <= field[j][i].x + 1; k++) {
-                    for (let n = field[j][i].y - 1; n <= field[j][i].y + 1; n++) {
-                        if ((k < 0) || (k > 9))
-                            continue;
-                        if ((n < 0) || (n > 9))
-                            continue;
-                        if (field[n][k].status === "free") {
-                            field[n][k].status = "not free";
-                        }
+    if (niceShip === true) {
+        for (let i = 0; i < 10; i++) {
+            for (let j = 0; j < 10; j++) {
+                if (field[j][i].shipId === ship.id) {
+                    for (let k = field[j][i].x - 1; k <= field[j][i].x + 1; k++) {
+                        for (let n = field[j][i].y - 1; n <= field[j][i].y + 1; n++) {
+                            if ((k < 0) || (k > 9))
+                                continue;
+                            if ((n < 0) || (n > 9))
+                                continue;
+                            if (field[n][k].status === "free") {
+                                field[n][k].status = "not free";
                             }
+                        }
+                    }
                 }
-            }
 
+            }
         }
     }
 

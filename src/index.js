@@ -2,8 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import placeShip from './placeShip';
 import './index.css';
-import ships from './ships.js';
-import ships2 from './ships2.js';
+import {setShips, setShips2} from './ships.js';
 import restartGame from './restartGame.js';
 
 function Square(props) {
@@ -100,8 +99,8 @@ class Game extends React.Component {
             fieldToBuild: [],
             playerField: [],
             prioritize: [],
-            enemyShips: [...ships],
-            playerShips: [...ships2],
+            enemyShips: [...setShips],
+            playerShips: [...setShips2],
             isFinished: false,
             logs: ['Waiting'],
             isPlayerTurn: true,
@@ -109,13 +108,11 @@ class Game extends React.Component {
             isNameAdded: false,
         };
         // делаем массивы двумерными и заполняем стартовыми данными
+
         for (let i = 0; i < 10; i++) {
             this.state.fieldToBuild.push([]);
             this.state.playerField.push([]);
             this.state.prioritize.push([]);
-        }
-
-        for (let i = 0; i < 10; i++) {
             for (let j = 0; j < 10; j++) {
                 this.state.fieldToBuild[i][j] = {
                     x: j,
@@ -177,10 +174,22 @@ class Game extends React.Component {
                             for (let j = 0; j < 10; j++) {
                               if (newField[j][i].shipId === hittedShip.id) {
                                   newField[j][i].isShipDestroyed = true;
+                                  for (let k = newField[j][i].x - 1; k <= newField[j][i].x + 1; k++) {
+                                      for (let n = newField[j][i].y - 1; n <= newField[j][i].y + 1; n++) {
+                                          if ((k < 0) || (k > 9))
+                                              continue;
+                                          if ((n < 0) || (n > 9))
+                                              continue;
+                                          if (newField[n][k].shot !== true) {
+                                              newField[n][k].shot = true;
+                                          }
+                                      }
+                                  }
                               }
                             }
                         }
                     }
+
 
                     if (newShips.every(ship => (ship.hp === 0))) {
                         newLogs.push('Game finished');
@@ -276,6 +285,7 @@ class Game extends React.Component {
                                             if ((n < 0) || (n > 9))
                                                 continue;
                                             if (newPrioritize[n][k].points !== 0) {
+                                                newField[n][k].shot = true;
                                                 newPrioritize[n][k].points = 0;
                                             }
                                         }
@@ -392,12 +402,17 @@ class Game extends React.Component {
                     />
                 </div>
                 <div className="game-info">
-                    {<div className="game-info-name">{text}</div>}
+                    <div className="game-info-name">{text}</div>
                     <GameLog logs={this.state.logs} />
                 </div>
                 <button className="button" onClick={ restartGame.bind(this) }>
                     <span>Reload</span>
                 </button>
+                {this.state.isFinished &&
+                    <div className="finished">
+                        Game finished.
+                    </div>
+                }
             </div>
         );
     }

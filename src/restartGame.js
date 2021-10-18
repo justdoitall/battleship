@@ -1,6 +1,5 @@
 import './index.js';
-import ships from "./ships";
-import ships2 from "./ships2";
+import {setShips, setShips2} from './ships.js';
 import placeShip from "./placeShip";
 
 export default function restartGame() {
@@ -11,8 +10,8 @@ export default function restartGame() {
         const newFieldToBuild = [...state.fieldToBuild];
         const newPlayerField = [...state.playerField];
         const newPrioritize = [...state.prioritize];
-        const newEnemyShips = [...ships];
-        const newPlayerShips = [...ships2];
+        const newEnemyShips = [...setShips];
+        const newPlayerShips = [...setShips2];
         const newIsFinished = false;
         const newIsPlayerTurn = true;
         const newLogs = ['Waiting'];

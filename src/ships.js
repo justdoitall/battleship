@@ -20,6 +20,7 @@ class Ship {
 }
 
 const setShips = [];
+const setShips2 = [];
 
 
 setShips.push(new Ship(4));
@@ -33,6 +34,18 @@ setShips.push(new Ship(1));
 setShips.push(new Ship(1));
 setShips.push(new Ship(1));
 
+setShips2.push(new Ship(4));
+setShips2.push(new Ship(3));
+setShips2.push(new Ship(3));
+setShips2.push(new Ship(2));
+setShips2.push(new Ship(2));
+setShips2.push(new Ship(2));
+setShips2.push(new Ship(1));
+setShips2.push(new Ship(1));
+setShips2.push(new Ship(1));
+setShips2.push(new Ship(1));
 
 
-export default setShips;
+
+
+export {setShips, setShips2};
