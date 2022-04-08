@@ -21,31 +21,25 @@ class Ship {
 
 const setShips = [];
 const setShips2 = [];
+let ships;
+for (let i = 0; i < 2; i++) {
+    if (i === 0) {
+        ships = setShips;
+    } else
+        ships = setShips2
 
+    ships.push(new Ship(4));
+    ships.push(new Ship(3));
+    ships.push(new Ship(3));
+    ships.push(new Ship(2));
+    ships.push(new Ship(2));
+    ships.push(new Ship(2));
+    ships.push(new Ship(1));
+    ships.push(new Ship(1));
+    ships.push(new Ship(1));
+    ships.push(new Ship(1));
 
-setShips.push(new Ship(4));
-setShips.push(new Ship(3));
-setShips.push(new Ship(3));
-setShips.push(new Ship(2));
-setShips.push(new Ship(2));
-setShips.push(new Ship(2));
-setShips.push(new Ship(1));
-setShips.push(new Ship(1));
-setShips.push(new Ship(1));
-setShips.push(new Ship(1));
-
-setShips2.push(new Ship(4));
-setShips2.push(new Ship(3));
-setShips2.push(new Ship(3));
-setShips2.push(new Ship(2));
-setShips2.push(new Ship(2));
-setShips2.push(new Ship(2));
-setShips2.push(new Ship(1));
-setShips2.push(new Ship(1));
-setShips2.push(new Ship(1));
-setShips2.push(new Ship(1));
-
-
+}
 
 
 export {setShips, setShips2};
